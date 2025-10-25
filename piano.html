@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多功能虚拟乐器模拟器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #ff9a9e, #fad0c4, #fad0c4, #a1c4fd);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #b8b8d1;
+            margin-bottom: 1.5rem;
+        }
+        
+        .main-content {
+            display: flex;
+            width: 100%;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .control-panel {
+            background: linear-gradient(to bottom, #2d3047, #1b1e2b);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .piano-container {
+            background: linear-gradient(to bottom, #2d3047, #1b1e2b);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .piano-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff9a9e, #fad0c4, #a1c4fd);
+        }
+        
+        .piano-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .piano {
+            display: flex;
+            position: relative;
+            height: 220px;
+            margin: 0 auto;
+            width: fit-content;
+            min-width: 100%;
+        }
+        
+        .key {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+        
+        .white-key {
+            background: linear-gradient(to bottom, #fff 0%, #f5f5f5 100%);
+            width: 40px;
+            height: 200px;
+            border-radius: 0 0 8px 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+            margin-right: -1px;
+        }
+        
+        .white-key:hover {
+            background: linear-gradient(to bottom, #f0f0f0 0%, #e8e8e8 100%);
+        }
+        
+        .white-key.active {
+            background: linear-gradient(to bottom, #e0e0e0 0%, #d0d0d0 100%);
+            box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.2);
+            transform: translateY(2px);
+        }
+        
+        .black-key {
+            background: linear-gradient(to bottom, #333 0%, #000 100%);
+            width: 26px;
+            height: 130px;
+            border-radius: 0 0 6px 6px;
+            z-index: 2;
+            margin-left: -13px;
+            margin-right: -13px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+        }
+        
+        .black-key:hover {
+            background: linear-gradient(to bottom, #222 0%, #111 100%);
+        }
+        
+        .black-key.active {
+            background: linear-gradient(to bottom, #111 0%, #000 100%);
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.1);
+            transform: translateY(1px);
+        }
+        
+        .key-label {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .white-key .key-label {
+            color: #333;
+        }
+        
+        .black-key .key-label {
+            color: #fff;
+        }
+        
+        .section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #a1c4fd;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.5rem;
+        }
+        
+        .instrument-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.8rem;
+        }
+        
+        .instrument-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .instrument-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .instrument-btn.active {
+            background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .instrument-icon {
+            font-size: 1.5rem;
+        }
+        
+        .control-btn {
+            background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .control-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .control-btn.record {
+            background: linear-gradient(to right, #ff4d4d 0%, #ff8c8c 100%);
+        }
+        
+        .visualization-container {
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-top: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .note-bar {
+            position: absolute;
+            width: 40px;
+            height: 10px;
+            background: linear-gradient(to right, #ff9a9e, #a1c4fd);
+            border-radius: 5px;
+            transition: top 0.1s linear;
+            opacity: 0.8;
+        }
+        
+        .note-bar.white {
+            background: linear-gradient(to right, #ff9a9e, #a1c4fd);
+        }
+        
+        .note-bar.black {
+            background: linear-gradient(to right, #ff6b6b, #4facfe);
+            width: 26px;
+            margin-left: 7px;
+        }
+        
+        .keyboard-mapping {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            width: 100%;
+            max-width: 1000px;
+        }
+        
+        .keyboard-mapping h2 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #a1c4fd;
+        }
+        
+        .key-mappings {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .key-mapping {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+        
+        .key-display {
+            background: #333;
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 5px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .contact-section {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            width: 100%;
+            max-width: 1000px;
+        }
+        
+        .contact-card {
+            background: linear-gradient(to bottom, #2d3047, #1b1e2b);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .contact-card i {
+            font-size: 2.5rem;
+            color: #a1c4fd;
+        }
+        
+        .contact-btn {
+            background: linear-gradient(to right, #00c6ff 0%, #0072ff 100%);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .contact-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        footer {
+            margin-top: 2rem;
+            text-align: center;
+            color: #b8b8d1;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .control-panel {
+                width: 100%;
+            }
+            
+            .piano {
+                height: 180px;
+            }
+            
+            .white-key {
+                width: 35px;
+                height: 160px;
+            }
+            
+            .black-key {
+                width: 22px;
+                height: 100px;
+                margin-left: -11px;
+                margin-right: -11px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .piano {
+                height: 150px;
+            }
+            
+            .white-key {
+                width: 30px;
+                height: 130px;
+            }
+            
+            .black-key {
+                width: 18px;
+                height: 80px;
+                margin-left: -9px;
+                margin-right: -9px;
+            }
+            
+            .key-label {
+                font-size: 0.7rem;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .contact-section {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>多功能虚拟乐器模拟器</h1>
+            <p class="subtitle">支持多种乐器，完整88键键盘</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="control-panel">
+                <div class="section">
+                    <h2 class="section-title">乐器选择</h2>
+                    <div class="instrument-grid">
+                        <button class="instrument-btn active" data-instrument="piano">
+                            <i class="fas fa-piano-keyboard instrument-icon"></i>
+                            <span>钢琴</span>
+                        </button>
+                        <button class="instrument-btn" data-instrument="violin">
+                            <i class="fas fa-music instrument-icon"></i>
+                            <span>小提琴</span>
+                        </button>
+                        <button class="instrument-btn" data-instrument="guzheng">
+                            <i class="fas fa-guitar instrument-icon"></i>
+                            <span>古筝</span>
+                        </button>
+                        <button class="instrument-btn" data-instrument="guitar">
+                            <i class="fas fa-guitar instrument-icon"></i>
+                            <span>吉他</span>
+                        </button>
+                        <button class="instrument-btn" data-instrument="flute">
+                            <i class="fas fa-music instrument-icon"></i>
+                            <span>长笛</span>
+                        </button>
+                        <button class="instrument-btn" data-instrument="trumpet">
+                            <i class="fas fa-music instrument-icon"></i>
+                            <span>小号</span>
+                        </button>
+                        <button class="instrument-btn" data-instrument="harp">
+                            <i class="fas fa-music instrument-icon"></i>
+                            <span>竖琴</span>
+                        </button>
+                        <button class="instrument-btn" data-instrument="organ">
+                            <i class="fas fa-church instrument-icon"></i>
+                            <span>管风琴</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h2 class="section-title">控制面板</h2>
+                    <button class="control-btn" id="recordBtn">
+                        <i class="fas fa-circle"></i> 录制演奏
+                    </button>
+                    <button class="control-btn" id="playBtn">
+                        <i class="fas fa-play"></i> 播放录制
+                    </button>
+                    <button class="control-btn" id="clearBtn">
+                        <i class="fas fa-trash"></i> 清除录制
+                    </button>
+                    <button class="control-btn" id="guideBtn">
+                        <i class="fas fa-music"></i> 音符指导
+                    </button>
+                </div>
+                
+                <div class="section">
+                    <h2 class="section-title">音符指导</h2>
+                    <div class="visualization-container" id="visualization">
+                        <!-- 音符指导条将在这里生成 -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="piano-container">
+                <div class="piano-wrapper">
+                    <div class="piano" id="piano">
+                        <!-- 钢琴键将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="keyboard-mapping">
+            <h2>键盘映射</h2>
+            <div class="key-mappings">
+                <div class="key-mapping">
+                    <span class="key-display">A</span>
+                    <span>C4</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">S</span>
+                    <span>D4</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">D</span>
+                    <span>E4</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">F</span>
+                    <span>F4</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">G</span>
+                    <span>G4</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">H</span>
+                    <span>A4</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">J</span>
+                    <span>B4</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">K</span>
+                    <span>C5</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">L</span>
+                    <span>D5</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">;</span>
+                    <span>E5</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">W</span>
+                    <span>C#4</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">E</span>
+                    <span>D#4</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">T</span>
+                    <span>F#4</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">Y</span>
+                    <span>G#4</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">U</span>
+                    <span>A#4</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">O</span>
+                    <span>C#5</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">P</span>
+                    <span>D#5</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">1</span>
+                    <span>C3</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">2</span>
+                    <span>D3</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">3</span>
+                    <span>E3</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">4</span>
+                    <span>F3</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">5</span>
+                    <span>G3</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">6</span>
+                    <span>A3</span>
+                </div>
+                <div class="key-mapping">
+                    <span class="key-display">7</span>
+                    <span>B3</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="contact-section">
+            <div class="contact-card">
+                <i class="fab fa-qq"></i>
+                <h3>加入QQ群</h3>
+                <p>与其他音乐爱好者交流</p>
+                <a href="https://qm.qq.com/q/vlfGgP8k24" class="contact-btn" target="_blank">
+                    <i class="fab fa-qq"></i> 点击加入
+                </a>
+            </div>
+            
+            <div class="contact-card">
+                <i class="fas fa-envelope"></i>
+                <h3>联系开发者</h3>
+                <p>反馈问题或提出建议</p>
+                <a href="mailto:3530388417@qq.com" class="contact-btn">
+                    <i class="fas fa-envelope"></i> 发送邮件
+                </a>
+            </div>
+        </div>
+        
+        <footer>
+            <p>使用键盘 A S D F G H J K L ; 和 W E T Y U O P 以及数字键 1-7 来弹奏乐器 | 使用鼠标点击乐器键</p>
+            <p>© 2025 多功能虚拟乐器模拟器 | 闲聊部队制作</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const piano = document.getElementById('piano');
+            const recordBtn = document.getElementById('recordBtn');
+            const playBtn = document.getElementById('playBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const guideBtn = document.getElementById('guideBtn');
+            const visualization = document.getElementById('visualization');
+            
+            // 乐器配置
+            const instruments = [
+                { id: 'piano', name: '钢琴', icon: 'fa-piano-keyboard' },
+                { id: 'violin', name: '小提琴', icon: 'fa-music' },
+                { id: 'guzheng', name: '古筝', icon: 'fa-guitar' },
+                { id: 'guitar', name: '吉他', icon: 'fa-guitar' },
+                { id: 'flute', name: '长笛', icon: 'fa-music' },
+                { id: 'trumpet', name: '小号', icon: 'fa-music' },
+                { id: 'harp', name: '竖琴', icon: 'fa-music' },
+                { id: 'organ', name: '管风琴', icon: 'fa-church' }
+            ];
+            
+            // 完整的88键钢琴键配置
+            const keys = [];
+            const keyMappings = [
+                // 低音区 - 数字键
+                { key: '1', note: 'C3', type: 'white', label: '1' },
+                { key: '2', note: 'D3', type: 'white', label: '2' },
+                { key: '3', note: 'E3', type: 'white', label: '3' },
+                { key: '4', note: 'F3', type: 'white', label: '4' },
+                { key: '5', note: 'G3', type: 'white', label: '5' },
+                { key: '6', note: 'A3', type: 'white', label: '6' },
+                { key: '7', note: 'B3', type: 'white', label: '7' },
+                
+                // 中音区 - 字母键
+                { key: 'A', note: 'C4', type: 'white', label: 'A' },
+                { key: 'S', note: 'D4', type: 'white', label: 'S' },
+                { key: 'D', note: 'E4', type: 'white', label: 'D' },
+                { key: 'F', note: 'F4', type: 'white', label: 'F' },
+                { key: 'G', note: 'G4', type: 'white', label: 'G' },
+                { key: 'H', note: 'A4', type: 'white', label: 'H' },
+                { key: 'J', note: 'B4', type: 'white', label: 'J' },
+                { key: 'K', note: 'C5', type: 'white', label: 'K' },
+                { key: 'L', note: 'D5', type: 'white', label: 'L' },
+                { key: ';', note: 'E5', type: 'white', label: ';' },
+                
+                // 高音区 - 符号键
+                { key: "'", note: 'F5', type: 'white', label: "'" },
+                { key: '\\', note: 'G5', type: 'white', label: '\\' },
+                { key: 'Z', note: 'A5', type: 'white', label: 'Z' },
+                { key: 'X', note: 'B5', type: 'white', label: 'X' },
+                { key: 'C', note: 'C6', type: 'white', label: 'C' },
+                { key: 'V', note: 'D6', type: 'white', label: 'V' },
+                { key: 'B', note: 'E6', type: 'white', label: 'B' },
+                { key: 'N', note: 'F6', type: 'white', label: 'N' },
+                { key: 'M', note: 'G6', type: 'white', label: 'M' },
+                { key: ',', note: 'A6', type: 'white', label: ',' },
+                { key: '.', note: 'B6', type: 'white', label: '.' },
+                { key: '/', note: 'C7', type: 'white', label: '/' },
+                
+                // 黑键
+                { key: 'W', note: 'C#4', type: 'black', label: 'W' },
+                { key: 'E', note: 'D#4', type: 'black', label: 'E' },
+                { key: 'T', note: 'F#4', type: 'black', label: 'T' },
+                { key: 'Y', note: 'G#4', type: 'black', label: 'Y' },
+                { key: 'U', note: 'A#4', type: 'black', label: 'U' },
+                { key: 'O', note: 'C#5', type: 'black', label: 'O' },
+                { key: 'P', note: 'D#5', type: 'black', label: 'P' },
+                { key: '[', note: 'F#5', type: 'black', label: '[' },
+                { key: ']', note: 'G#5', type: 'black', label: ']' },
+                { key: 'Q', note: 'A#5', type: 'black', label: 'Q' },
+                { key: 'R', note: 'C#6', type: 'black', label: 'R' },
+                { key: 'I', note: 'D#6', type: 'black', label: 'I' }
+            ];
+            
+            // 生成完整的88键钢琴
+            function generateFullPiano() {
+                // 生成从A0到C8的完整88键
+                const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                let octave = 0;
+                let noteIndex = 9; // 从A0开始
+                
+                for (let i = 0; i < 88; i++) {
+                    const noteName = notes[noteIndex] + octave;
+                    const type = notes[noteIndex].includes('#') ? 'black' : 'white';
+                    
+                    // 查找对应的键盘映射
+                    const mapping = keyMappings.find(m => m.note === noteName);
+                    const key = mapping ? mapping.key : null;
+                    const label = mapping ? mapping.label : noteName;
+                    
+                    keys.push({
+                        note: noteName,
+                        type: type,
+                        key: key,
+                        label: label,
+                        frequency: calculateFrequency(noteName)
+                    });
+                    
+                    noteIndex++;
+                    if (noteIndex >= notes.length) {
+                        noteIndex = 0;
+                        octave++;
+                    }
+                }
+            }
+            
+            // 计算音符频率
+            function calculateFrequency(note) {
+                const A4 = 440;
+                const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                
+                const noteName = note.slice(0, -1);
+                const octave = parseInt(note.slice(-1));
+                
+                const noteIndex = notes.indexOf(noteName);
+                const A4Index = 9; // A在notes数组中的索引
+                const A4Octave = 4;
+                
+                const semitones = (octave - A4Octave) * 12 + (noteIndex - A4Index);
+                
+                return A4 * Math.pow(2, semitones / 12);
+            }
+            
+            // 音频上下文和振荡器
+            let audioContext;
+            let oscillators = {};
+            let isRecording = false;
+            let recordedNotes = [];
+            let recordingStartTime;
+            let currentInstrument = 'piano';
+            let noteBars = [];
+            let noteBarInterval;
+            let isGuideActive = false;
+            
+            // 初始化钢琴键
+            function initPiano() {
+                piano.innerHTML = '';
+                
+                // 生成完整的88键钢琴
+                keys.forEach(keyConfig => {
+                    const keyElement = document.createElement('div');
+                    keyElement.className = `key ${keyConfig.type}-key`;
+                    keyElement.dataset.note = keyConfig.note;
+                    keyElement.dataset.key = keyConfig.key;
+                    keyElement.dataset.frequency = keyConfig.frequency;
+                    
+                    const labelElement = document.createElement('div');
+                    labelElement.className = 'key-label';
+                    labelElement.textContent = keyConfig.label;
+                    
+                    keyElement.appendChild(labelElement);
+                    piano.appendChild(keyElement);
+                    
+                    // 鼠标事件
+                    keyElement.addEventListener('mousedown', () => playNote(keyConfig.note, keyElement));
+                    keyElement.addEventListener('mouseup', () => stopNote(keyConfig.note));
+                    keyElement.addEventListener('mouseleave', () => stopNote(keyConfig.note));
+                });
+            }
+            
+            // 播放音符
+            function playNote(note, element) {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                // 停止之前相同音符的振荡器
+                if (oscillators[note]) {
+                    oscillators[note].stop();
+                }
+                
+                // 创建振荡器
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                // 设置频率
+                const frequency = getFrequency(note);
+                oscillator.frequency.value = frequency;
+                
+                // 根据乐器设置波形和音色
+                setInstrumentSound(oscillator, gainNode, currentInstrument);
+                
+                // 连接节点
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // 开始播放
+                oscillator.start();
+                
+                // 存储振荡器
+                oscillators[note] = { oscillator, gainNode };
+                
+                // 添加激活类
+                element.classList.add('active');
+                
+                // 记录音符（如果正在录制）
+                if (isRecording) {
+                    const time = Date.now() - recordingStartTime;
+                    recordedNotes.push({ note, time, type: 'start' });
+                }
+            }
+            
+            // 停止音符
+            function stopNote(note) {
+                if (oscillators[note]) {
+                    const { oscillator, gainNode } = oscillators[note];
+                    
+                    // 淡出音量
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                    
+                    // 停止振荡器
+                    setTimeout(() => {
+                        oscillator.stop();
+                    }, 100);
+                    
+                    // 从振荡器对象中移除
+                    delete oscillators[note];
+                }
+                
+                // 移除激活类
+                const keyElement = document.querySelector(`.key[data-note="${note}"]`);
+                if (keyElement) {
+                    keyElement.classList.remove('active');
+                }
+                
+                // 记录音符停止（如果正在录制）
+                if (isRecording) {
+                    const time = Date.now() - recordingStartTime;
+                    recordedNotes.push({ note, time, type: 'stop' });
+                }
+            }
+            
+            // 获取音符频率
+            function getFrequency(note) {
+                const key = keys.find(k => k.note === note);
+                return key ? key.frequency : 440;
+            }
+            
+            // 设置乐器音色
+            function setInstrumentSound(oscillator, gainNode, instrument) {
+                // 设置音量包络
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                
+                // 钢琴、古筝、长笛、竖琴使用相似音色
+                if (['piano', 'guzheng', 'flute', 'harp'].includes(instrument)) {
+                    oscillator.type = 'sine';
+                    gainNode.gain.linearRampToValueAtTime(0.7, audioContext.currentTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.5);
+                }
+                // 小提琴、吉他、小号、管风琴使用相似音色
+                else if (['violin', 'guitar', 'trumpet', 'organ'].includes(instrument)) {
+                    oscillator.type = 'sawtooth';
+                    gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.1);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 2);
+                }
+            }
+            
+            // 键盘事件处理
+            document.addEventListener('keydown', function(event) {
+                const key = event.key.toUpperCase();
+                const keyElement = document.querySelector(`.key[data-key="${key}"]`);
+                
+                if (keyElement && !keyElement.classList.contains('active')) {
+                    const note = keyElement.dataset.note;
+                    playNote(note, keyElement);
+                }
+            });
+            
+            document.addEventListener('keyup', function(event) {
+                const key = event.key.toUpperCase();
+                const keyElement = document.querySelector(`.key[data-key="${key}"]`);
+                
+                if (keyElement) {
+                    const note = keyElement.dataset.note;
+                    stopNote(note);
+                }
+            });
+            
+            // 乐器切换
+            document.querySelectorAll('.instrument-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.instrument-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentInstrument = this.dataset.instrument;
+                });
+            });
+            
+            // 录制功能
+            recordBtn.addEventListener('click', function() {
+                isRecording = !isRecording;
+                
+                if (isRecording) {
+                    recordedNotes = [];
+                    recordingStartTime = Date.now();
+                    recordBtn.innerHTML = '<i class="fas fa-stop"></i> 停止录制';
+                    recordBtn.classList.add('record');
+                } else {
+                    recordBtn.innerHTML = '<i class="fas fa-circle"></i> 录制演奏';
+                    recordBtn.classList.remove('record');
+                }
+            });
+            
+            // 播放录制
+            playBtn.addEventListener('click', function() {
+                if (recordedNotes.length === 0) {
+                    alert('没有录制的音符可播放');
+                    return;
+                }
+                
+                recordedNotes.forEach(noteEvent => {
+                    setTimeout(() => {
+                        const keyElement = document.querySelector(`.key[data-note="${noteEvent.note}"]`);
+                        
+                        if (noteEvent.type === 'start') {
+                            playNote(noteEvent.note, keyElement);
+                        } else {
+                            stopNote(noteEvent.note);
+                        }
+                    }, noteEvent.time);
+                });
+            });
+            
+            // 清除录制
+            clearBtn.addEventListener('click', function() {
+                recordedNotes = [];
+                alert('已清除录制的音符');
+            });
+            
+            // 音符指导功能
+            guideBtn.addEventListener('click', function() {
+                isGuideActive = !isGuideActive;
+                
+                if (isGuideActive) {
+                    guideBtn.innerHTML = '<i class="fas fa-stop"></i> 停止指导';
+                    guideBtn.classList.add('record');
+                    startNoteGuidance();
+                } else {
+                    guideBtn.innerHTML = '<i class="fas fa-music"></i> 音符指导';
+                    guideBtn.classList.remove('record');
+                    stopNoteGuidance();
+                }
+            });
+            
+            // 开始音符指导
+            function startNoteGuidance() {
+                // 清除之前的定时器
+                if (noteBarInterval) {
+                    clearInterval(noteBarInterval);
+                }
+                
+                // 创建音符指导条
+                visualization.innerHTML = '';
+                noteBars = [];
+                
+                // 只为有键盘映射的键创建指导条
+                keys.forEach(key => {
+                    if (key.key) {
+                        const noteBar = document.createElement('div');
+                        noteBar.className = `note-bar ${key.type}`;
+                        noteBar.dataset.note = key.note;
+                        noteBar.style.left = getKeyPosition(key.note);
+                        noteBar.style.top = '-20px';
+                        visualization.appendChild(noteBar);
+                        noteBars.push(noteBar);
+                    }
+                });
+                
+                // 模拟音符指导
+                noteBarInterval = setInterval(() => {
+                    // 移动所有音符条
+                    noteBars.forEach(bar => {
+                        let top = parseInt(bar.style.top) || -20;
+                        top += 5;
+                        
+                        if (top > visualization.offsetHeight) {
+                            top = -20;
+                        }
+                        
+                        bar.style.top = `${top}px`;
+                    });
+                    
+                    // 随机高亮一个音符
+                    if (Math.random() < 0.1) {
+                        const randomBar = noteBars[Math.floor(Math.random() * noteBars.length)];
+                        if (randomBar) {
+                            randomBar.style.opacity = '1';
+                            setTimeout(() => {
+                                randomBar.style.opacity = '0.8';
+                            }, 200);
+                        }
+                    }
+                }, 100);
+            }
+            
+            // 停止音符指导
+            function stopNoteGuidance() {
+                if (noteBarInterval) {
+                    clearInterval(noteBarInterval);
+                }
+                noteBars.forEach(bar => {
+                    bar.style.top = '-20px';
+                });
+            }
+            
+            // 获取键位位置
+            function getKeyPosition(note) {
+                const keyIndex = keys.findIndex(k => k.note === note);
+                if (keyIndex === -1) return '0px';
+                
+                const whiteKeyCount = keys.filter(k => k.type === 'white').length;
+                const keyWidth = 40; // 白键宽度
+                
+                if (keys[keyIndex].type === 'white') {
+                    const whiteKeyIndex = keys.slice(0, keyIndex).filter(k => k.type === 'white').length;
+                    return `${whiteKeyIndex * keyWidth}px`;
+                } else {
+                    const whiteKeyIndex = keys.slice(0, keyIndex).filter(k => k.type === 'white').length;
+                    return `${whiteKeyIndex * keyWidth - 7}px`;
+                }
+            }
+            
+            // 生成完整钢琴并初始化
+            generateFullPiano();
+            initPiano();
+        });
+    </script>
+</body>
+</html>
